@@ -1,3 +1,4 @@
 .vscode/*
 Containers/Kafka/data/*
 Containers/Redis/data/*
+Containers/Etcd/data/*
