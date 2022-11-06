@@ -12,11 +12,17 @@ type APIResponse interface{}
 
 type LogicFunc func(c *gin.Context, r APIRequest) (APIResponse, error)
 
-func registerApi(r APIRequest, h LogicFunc) gin.HandlerFunc {
+type APIRequestFunc func() APIRequest
+
+func registerApi(rf APIRequestFunc, h LogicFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := c.ShouldBind(r); err != nil {
-			fmt.Fprintf(c.Writer, "bind param err: %s", err)
-			return
+		var r APIRequest
+		if rf != nil {
+			r = rf()
+			if err := c.ShouldBind(r); err != nil {
+				fmt.Fprintf(c.Writer, "bind param err: %s", err)
+				return
+			}
 		}
 		resp, err := h(c, r)
 		if err != nil {
@@ -28,6 +34,6 @@ func registerApi(r APIRequest, h LogicFunc) gin.HandlerFunc {
 	}
 }
 
-func Api(r APIRequest, h LogicFunc) gin.HandlerFunc {
-	return registerApi(r, h)
+func Api(rf APIRequestFunc, h LogicFunc) gin.HandlerFunc {
+	return registerApi(rf, h)
 }

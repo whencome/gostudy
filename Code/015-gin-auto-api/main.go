@@ -23,7 +23,9 @@ func IDRequestLogic(c *gin.Context, r APIRequest) (APIResponse, error) {
 
 func main() {
 	r := gin.Default()
-	r.GET("/test", Api(new(IDRequest), func(c *gin.Context, r APIRequest) (APIResponse, error) {
+	r.GET("/test", Api(func() APIRequest {
+		return new(IDRequest)
+	}, func(c *gin.Context, r APIRequest) (APIResponse, error) {
 		fmt.Println("----- ok -----")
 		req, ok := r.(*IDRequest)
 		if !ok {
@@ -32,6 +34,8 @@ func main() {
 		fmt.Println("IDRequest.ID = ", req.ID)
 		return "111", nil
 	}))
-	r.GET("/test1", Api(new(IDRequest), IDRequestLogic))
+	r.GET("/test1", Api(func() APIRequest {
+		return new(IDRequest)
+	}, IDRequestLogic))
 	r.Run()
 }
