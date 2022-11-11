@@ -2,24 +2,34 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
+// define gin run mode constant
 const (
 	ModeDebug   = "debug"
 	ModeRelease = "release"
 )
 
+// Options http server run options
 type Options struct {
-	Port int    `json:"port" yaml:"port" toml:"port"` // 服务端口
-	Mode string `json:"mode" yaml:"mode" toml:"mode"` // 运行模式, debug or release
+	Port     int    `json:"port" yaml:"port" toml:"port"`                // 服务端口
+	Mode     string `json:"mode" yaml:"mode" toml:"mode"`                // 运行模式, debug or release
+	Tls      bool   `json:"tls" yaml:"tls" toml:"tls"`                   // 是否启用HTTPS
+	CertFile string `json:"cert_file" yaml:"cert_file" toml:"cert_file"` // 证书文件
+	KeyFile  string `json:"key_file" yaml:"key_file" toml:"key_file"`    // 密钥文件
 }
 
+// InitFunc http server init func
 type InitFunc func(r *gin.Engine)
+
+// HookFunc http server init & stop hooks
 type HookFunc func() error
 
 // DefaultOptions create a default options
@@ -27,30 +37,27 @@ func DefaultOptions() *Options {
 	return &Options{
 		Port: 8080,
 		Mode: ModeRelease,
+		Tls:  false,
 	}
 }
 
-// 定义一个HTTP服务
+// HTTPServer define a simple http server
 type HTTPServer struct {
-	// 服务是否正在允许
 	running bool
-	// gin engine
-	engine *gin.Engine
-	// http服务信息
-	svr *http.Server
-	// 站点配置
+	engine  *gin.Engine
+	svr     *http.Server
 	options *Options
-	// 初始化方法
+	// server initialize functions
 	initFunc InitFunc
-	// 初始化前后执行的方法
+	// hooks of init server
 	preInitFunc  HookFunc
 	postInitFunc HookFunc
-	// 服务通知之后执行的方法
+	// hooks of stop server
 	preStopFunc  HookFunc
 	postStopFunc HookFunc
 }
 
-// 创建一个server
+// New create a http server
 func New(options *Options) *HTTPServer {
 	if options == nil {
 		options = DefaultOptions()
@@ -61,7 +68,6 @@ func New(options *Options) *HTTPServer {
 		svr:     nil,
 		options: options,
 	}
-	// 初始化http server
 	s.svr = &http.Server{
 		Addr:    fmt.Sprintf(":%d", options.Port),
 		Handler: s.engine,
@@ -69,7 +75,6 @@ func New(options *Options) *HTTPServer {
 	return s
 }
 
-// Init 初始化路由
 func (s *HTTPServer) Init(f InitFunc) {
 	s.initFunc = f
 }
@@ -90,67 +95,75 @@ func (s *HTTPServer) PostStop(f HookFunc) {
 	s.postStopFunc = f
 }
 
-func (s *HTTPServer) execHook(f HookFunc, action string) {
+func (s *HTTPServer) execHook(f HookFunc) error {
 	if f == nil {
-		return
+		return nil
 	}
-	e := f()
-	if e != nil {
-		log.Printf("%s fail: %s\n", action, e)
-	}
+	return f()
 }
 
-func (s *HTTPServer) execHookMustSucc(f HookFunc, action string) {
-	if f == nil {
-		return
-	}
-	e := f()
-	if e != nil {
-		log.Panicf("%s fail %s\n", action, e)
-	}
-}
-
-// 判断服务是否可以运行
-func (s *HTTPServer) IsRunnable() bool {
+// Runnable check whether server is runnable
+func (s *HTTPServer) Runnable() bool {
 	return !s.running
 }
 
-// 启动服务
-func (s *HTTPServer) Start() {
-	if !s.IsRunnable() {
-		log.Println("can not start server, it's probably already started")
-		return
+// Start start http server
+func (s *HTTPServer) Start() (bool, error) {
+	if !s.Runnable() {
+		return false, errors.New("http server not runnable, it's probably has already started")
 	}
-	// 设置运行模式
+	// set gin run mode
 	if s.options.Mode != ModeDebug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// 执行初始化之前的操作
-	s.execHookMustSucc(s.postInitFunc, "pre init")
+	// 初始化server
+	if e := s.execHook(s.postInitFunc); e != nil {
+		return false, e
+	}
 	if s.initFunc != nil {
 		s.initFunc(s.engine)
 	}
-	s.execHookMustSucc(s.postInitFunc, "post init")
+	if e := s.execHook(s.postInitFunc); e != nil {
+		return false, e
+	}
+
 	// 启动http服务
 	s.running = true
+	startCh := make(chan error)
 	go func() {
-		if err := s.svr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("run server failed: %s \n", err)
+		if s.options.Tls {
+			if err := s.svr.ListenAndServeTLS(s.options.CertFile, s.options.KeyFile); err != nil {
+				startCh <- err
+			}
+		} else {
+			if err := s.svr.ListenAndServe(); err != nil {
+				startCh <- err
+			}
 		}
 	}()
-	log.Printf("http service started on %s", s.svr.Addr)
+
+	select {
+	case err := <-startCh:
+		return false, err
+	case <-time.After(time.Second * 3):
+		log.Printf("http server started on %s", s.svr.Addr)
+		return true, nil
+	}
 }
 
-// 停止服务
+// Stop stop the server
 func (s *HTTPServer) Stop() {
-	s.execHook(s.preStopFunc, "prepare stop server")
+	// exec pre stop hook
+	s.execHook(s.preStopFunc)
+	// shutdown the http server
 	log.Println("start to shutdown http server")
 	if err := s.svr.Shutdown(context.Background()); err != nil {
 		log.Printf("shutdown server failed: %s \n", err)
 		return
 	}
 	s.running = false
-	s.execHook(s.postStopFunc, "")
+	// exec post stop hook
+	s.execHook(s.postStopFunc)
 	log.Println("http server closed")
 }
