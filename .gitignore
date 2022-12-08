@@ -2,3 +2,4 @@
 Containers/Kafka/data/*
 Containers/Redis/data/*
 Containers/Etcd/data/*
+Containers/Rabbitmq/data/*

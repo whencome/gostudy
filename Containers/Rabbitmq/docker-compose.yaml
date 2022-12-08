@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.26-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: always
+    privileged: true
+    networks:
+      - rabbitmqnet
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - ./data/data:/var/lib/rabbitmq/mnesia
+      - ./data/log:/var/log
+    environment:
+      RABBITMQ_DEFAULT_VHOST: '/'
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root
+
+networks:
+  rabbitmqnet:
+    driver: bridge
+    

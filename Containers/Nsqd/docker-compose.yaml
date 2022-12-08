@@ -1,0 +1,39 @@
+# see https://nsq.io/deployment/docker.html
+version: '3'
+services:
+  nsqlookupd:
+    image: nsqio/nsq:v1.2.1
+    command: /nsqlookupd
+    networks:
+      - nsqnet
+    hostname: nsqlookupd
+    ports:
+      - "4161:4161"
+      - "4160:4160"
+
+  nsqd:
+    image: nsqio/nsq:v1.2.1
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160
+    depends_on:
+      - nsqlookupd
+    hostname: nsqd
+    networks:
+      - nsqnet
+    ports:
+      - "4151:4151"
+      - "4150:4150"
+
+  nsqadmin:
+    image: nsqio/nsq:v1.2.1
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    hostname: nsqadmin
+    ports:
+      - "4171:4171"
+    networks:
+      - nsqnet
+
+networks:
+  nsqnet:
+    driver: bridge
