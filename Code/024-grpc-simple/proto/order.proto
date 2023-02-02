@@ -1,0 +1,22 @@
+// protoc -I ./proto --go_out=./pb/ecommerce --go_opt=paths=source_relative --go-grpc_out=./pb/ecommerce --go-grpc_opt=paths=source_relative ./proto/order.proto
+// see: https://zhuanlan.zhihu.com/p/601011139
+syntax = "proto3";
+
+package ecommerce;
+
+import "google/protobuf/wrappers.proto";
+
+option go_package = "/pb/ecommerce";
+
+// 定义消息
+message Order {
+    string id = 1;
+    repeated string items = 2;
+    string description = 3;
+    float price = 4;
+    string destination = 5;
+}
+
+service OrderManagement {
+    rpc getOrder(google.protobuf.StringValue) returns (Order);
+}
