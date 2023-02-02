@@ -1,0 +1,26 @@
+// protoc -I ./proto/ecommerce --go_out=./pb/ecommerce --go_opt=paths=source_relative --go-grpc_out=./pb/ecommerce --go-grpc_opt=paths=source_relative ./proto/ecommerce/order.proto
+syntax = "proto3";
+
+package ecommerce;
+
+option go_package = "/pb/ecommerce";
+
+import "google/protobuf/wrappers.proto";
+
+message Order {
+  string id = 1;
+  repeated string items = 2;
+  string description = 3;
+  float price = 4;
+  string destination = 5;
+}
+
+message Shipment{
+  string id = 1;
+  string status = 2;
+  Order order = 3;
+}
+
+service OrderManagement {
+    rpc processOrders(stream google.protobuf.StringValue) returns (stream Shipment);
+}
