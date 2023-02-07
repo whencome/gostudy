@@ -1,0 +1,73 @@
+// protoc --proto_path=./api --proto_path=./third_party --go_out=paths=source_relative:./api --go_opt=paths=source_relative --go-grpc_out=paths=source_relative:./api --go-grpc_opt=paths=source_relative ./api/helloworld/v1/user.proto
+syntax = "proto3";
+
+package api.helloworld.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "helloworld/api/helloworld/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.helloworld.v1";
+
+service User {
+	rpc CreateUser (CreateUserRequest) returns (CreateUserReply){
+		option (google.api.http) = {
+			post: "/user",
+			body: "*",
+		};
+	};
+	rpc UpdateUser (UpdateUserRequest) returns (UpdateUserReply){
+		option (google.api.http) = {
+			put: "/user/{id}",
+			body: "*",
+		};
+	};
+	rpc DeleteUser (DeleteUserRequest) returns (DeleteUserReply){
+		option (google.api.http) = {
+			delete: "/user/{id}",
+		};
+	};
+	rpc GetUser (GetUserRequest) returns (GetUserReply){
+		option (google.api.http) = {
+			get: "/user/{id}",
+		};
+	};
+	rpc ListUser (ListUserRequest) returns (ListUserReply){
+		option (google.api.http) = {
+			get: "/users",
+		};
+	};
+	rpc QueryUser (QueryUserRequest) returns (QueryUserReply);
+}
+
+message CreateUserRequest {}
+message CreateUserReply {}
+
+message UpdateUserRequest {
+	int64 id = 1;
+}
+message UpdateUserReply {}
+
+message DeleteUserRequest {
+	int64 id = 1;
+}
+message DeleteUserReply {}
+
+message GetUserRequest {
+	int64 id = 1;
+}
+message GetUserReply {
+	int64 id = 1;
+}
+
+message ListUserRequest {}
+message ListUserReply {}
+
+message QueryUserRequest {
+	int64 id = 1;
+}
+message QueryUserReply {
+	int64 id = 1;
+	string name = 2;
+	uint32 age = 3;
+}
