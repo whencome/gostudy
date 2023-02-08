@@ -1,0 +1,25 @@
+// protoc --proto_path=. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./pb/echo.proto
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pb";
+
+service Echo {
+    rpc UnarySay(UnarySayRequest) returns(UnarySayResponse);
+    rpc StreamSay(stream StreamSayRequest) returns(stream StreamSayResponse);
+};
+
+message UnarySayRequest {
+    string req = 1;
+}
+message UnarySayResponse {
+    string resp = 1;
+}
+
+message StreamSayRequest {
+    string req = 1;
+}
+message StreamSayResponse {
+    string resp = 1;
+}
