@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: meilisearch
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "7700:7700"
+    volumes:
+      - ./data:/meili_data
+    networks:
+      meilisearchnet:
+
+networks:
+  meilisearchnet:
