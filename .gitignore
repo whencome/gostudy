@@ -4,3 +4,4 @@ Containers/Redis/data/*
 Containers/Etcd/data/*
 Containers/Rabbitmq/data/*
 Containers/Consul/data/*
+Code/035-boltdb01/*.db

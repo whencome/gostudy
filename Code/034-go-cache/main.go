@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
-
+	// 创建一个缓存对象，缓存时间5分钟，每10秒清理一次过期缓存
 	c := cache.New(time.Minute*5, time.Second*10)
+	// 设置缓存，缓存5秒钟
 	c.Set("foo", 12, time.Second*5)
 	v, found := c.Get("foo")
 	if !found {
