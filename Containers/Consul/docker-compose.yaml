@@ -1,0 +1,57 @@
+version: '3'
+
+networks:
+  consulnet:
+
+services:
+  consul1:
+    image: consul:1.15.2
+    container_name: consul1
+    restart: always
+    networks:
+      - consulnet
+    command: agent -server -client=0.0.0.0 -bootstrap-expect=3 -node=consul1
+    volumes:
+      - "./data/consul1:/consul/data:rw"
+      # - /usr/local/docker_my/consul/consul1/config:/consul/config
+
+  consul2:
+    image: consul:1.15.2
+    container_name: consul2
+    restart: always
+    networks:
+      - consulnet
+    command: agent -server -client=0.0.0.0 -retry-join=consul1 -node=consul2
+    volumes:
+      - "./data/consul2:/consul/data:rw"
+      # - /usr/local/docker_my/consul/consul2/config:/consul/config
+
+  consul3:
+    image: consul:1.15.2
+    container_name: consul3
+    restart: always
+    networks:
+      - consulnet
+    command: agent -server -client=0.0.0.0 -retry-join=consul1 -node=consul3
+    volumes:
+      - "./data/consul3:/consul/data:rw"
+      # - /usr/local/docker_my/consul/consul3/config:/consul/config
+
+  # 提供服务注册和发现以及web控制台
+  consul:
+    image: consul:1.15.2
+    container_name: consul
+    restart: always
+    ports:
+      - "8500:8500"
+    networks:
+      - consulnet
+    command: agent -dev -client=0.0.0.0 -retry-join=consul1 -ui -node=client1
+    volumes:
+      - "./data/consul:/consul/data:rw"
+      # - /usr/local/docker_my/consul/consul4/config:/consul/config
+  
+  
+
+
+
