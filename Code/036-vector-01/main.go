@@ -15,7 +15,7 @@ func main() {
 	dotProduct := floats.Dot(vectorA, vectorB)
 	fmt.Printf("the dot product of A and B is : %.2f\n", dotProduct)
 
-	// 将向量个各元素扩展1.5倍
+	// 向量的标量乘法（标量乘以向量）
 	floats.Scale(1.5, vectorA)
 	fmt.Printf("Scaling A by 1.5v gives: %v\n", vectorA)
 
