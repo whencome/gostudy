@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  minio:
+    image: minio/minio
+    restart: always
+    container_name: minio
+    privileged: true
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      TZ: Asia/Shanghai
+      MINIO_ACCESS_KEY: admin  # 管理后台用户名
+      MINIO_SECRET_KEY: admin123 # 管理后台密码，最少8位
+    volumes:
+      - ./data:/data # 映射数据存储目录
+      - ./config:/root/.minio/ # 映射配置目录
+    command: server --console-address ':9001' /data
+    networks:
+      - minionet
+
+networks:
+  minionet:
+    driver: bridge
+    

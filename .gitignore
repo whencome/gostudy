@@ -4,4 +4,6 @@ Containers/Redis/data/*
 Containers/Etcd/data/*
 Containers/Rabbitmq/data/*
 Containers/Consul/data/*
+Containers/Minio/data/*
+Containers/Minio/config/*
 Code/035-boltdb01/*.db
