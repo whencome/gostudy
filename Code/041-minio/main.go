@@ -56,27 +56,30 @@ func main() {
         log.Fatalf("conetct minio server fail %s url %s ", err, minioEndpoint)
     }
 
-    bucketName := "mybucket"
+    bucketName := "mybucket01"
     location := "cn-chengdu-01"
     policy := getPublicPolicy(bucketName)
     // 初始化bucket
     ctx := context.Background()
-    err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
-    if err != nil {
-        exists, err := minioClient.BucketExists(ctx, bucketName)
-        if err == nil && exists {
-            log.Printf("owned %s\n", bucketName)
-        } else {
-            log.Fatalln(err)
+    // 1. 先检查bucket是否存在
+    exists, err := minioClient.BucketExists(ctx, bucketName)
+    if err == nil && !exists {
+        log.Printf("bucket %s not exists, try to make it\n", bucketName)
+        err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+        if err != nil {
+            log.Panicf("make bucket err: %s\n", err)
+        }
+        // 设置策略(设置为公共策略方便直接通过地址访问)
+        err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
+        if err != nil {
+            log.Fatalln("set policy err: ", err)
         }
     } else {
-        log.Printf("create bucket %s success\n", bucketName)
-    }
-
-    // 设置策略(设置为公共策略方便直接通过地址访问)
-    err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
-    if err != nil {
-        log.Fatalln("set policy err: ", err)
+        if err != nil {
+            log.Panicf("check bucket err: %s\n", err)
+        } else {
+            log.Printf("bucket %s exists", bucketName)
+        }
     }
 
     // 上传文件
