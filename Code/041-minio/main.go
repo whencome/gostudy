@@ -6,58 +6,90 @@
 package main
 
 import (
-	"context"
-	"log"
+    "context"
+    "fmt"
+    "log"
 
-	minio "github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+    minio "github.com/minio/minio-go/v7"
+    "github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 // 定义minio配置
 var (
-	minioUrl       = "192.168.101.13"
-	minioPort      = 9000
-	minioEndpoint  = "192.168.101.13:9000"
-	minioAccessKey = "admin"
-	minioSecretKey = "admin123"
-	minioUseSSL    = false
+    minioEndpoint  = "127.0.0.1:9000"
+    minioAccessKey = "admin"
+    minioSecretKey = "admin123"
+    minioUseSSL    = false
 )
 
+func getPublicPolicy(bucketName string) string {
+    // version只能写死为2012-10-17
+    return `{
+	"Version": "2012-10-17",
+	"Statement": [{
+		"Effect": "Allow",
+		"Principal": {
+			"AWS": ["*"]
+		},
+		"Action": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
+		"Resource": ["arn:aws:s3:::` + bucketName + `"]
+	}, {
+		"Effect": "Allow",
+		"Principal": {
+			"AWS": ["*"]
+		},
+		"Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"],
+		"Resource": ["arn:aws:s3:::` + bucketName + `/*"]
+	}]
+}`
+}
+
 func main() {
-	// 根据配置连接minio server
-	minioClient, err := minio.New(
-		minioEndpoint,
-		&minio.Options{
-			Creds:  credentials.NewStaticV4(minioAccessKey, minioSecretKey, ""),
-			Secure: minioUseSSL,
-		})
-	if err != nil {
-		log.Fatalf("conetct minio server fail %s url %s ", err, minioEndpoint)
-	}
+    // 根据配置连接minio server
+    minioClient, err := minio.New(
+        minioEndpoint,
+        &minio.Options{
+            Creds:  credentials.NewStaticV4(minioAccessKey, minioSecretKey, ""),
+            Secure: minioUseSSL,
+        })
+    if err != nil {
+        log.Fatalf("conetct minio server fail %s url %s ", err, minioEndpoint)
+    }
 
-	bucketName := "mybucket"
-	location := "chengdu"
-	// 初始化bucket
-	ctx := context.Background()
-	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
-	if err != nil {
-		exists, err := minioClient.BucketExists(ctx, bucketName)
-		if err == nil && exists {
-			log.Printf("owned %s\n", bucketName)
-		} else {
-			log.Fatalln(err)
-		}
-	} else {
-		log.Printf("create bucket %s success\n", bucketName)
-	}
+    bucketName := "mybucket"
+    location := "cn-chengdu-01"
+    policy := getPublicPolicy(bucketName)
+    // 初始化bucket
+    ctx := context.Background()
+    err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+    if err != nil {
+        exists, err := minioClient.BucketExists(ctx, bucketName)
+        if err == nil && exists {
+            log.Printf("owned %s\n", bucketName)
+        } else {
+            log.Fatalln(err)
+        }
+    } else {
+        log.Printf("create bucket %s success\n", bucketName)
+    }
 
-	// 上传文件
-	localFile := "/mnt/c/Users/eric/Pictures/The-planet-energy-light-space_2560x1440.jpg"
-	objectName := "The-planet-energy-light-space_2560x1440.jpg"
-	contentType := "image/jpeg"
-	n, err := minioClient.FPutObject(ctx, bucketName, objectName, localFile, minio.PutObjectOptions{ContentType: contentType})
-	if err != nil {
-		log.Fatalf("put object fail: %s", err)
-	}
-	log.Printf("put object %s success, result: %#v\n", objectName, n)
+    // 设置策略(设置为公共策略方便直接通过地址访问)
+    err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
+    if err != nil {
+        log.Fatalln("set policy err: ", err)
+    }
+
+    // 上传文件
+    localFile := "testimg.jpg"
+    objectName := "2023/05/25/testimg.jpg"
+    contentType := "image/jpeg"
+    n, err := minioClient.FPutObject(ctx, bucketName, objectName, localFile, minio.PutObjectOptions{ContentType: contentType})
+    if err != nil {
+        log.Fatalf("put object fail: %s", err)
+    }
+    log.Printf("put object %s success, result: %#v\n", objectName, n)
+
+    // 构造访问地址
+    imgUrl := fmt.Sprintf("%s/%s/%s", minioEndpoint, bucketName, objectName)
+    log.Printf("image url: %#v\n", imgUrl)
 }
