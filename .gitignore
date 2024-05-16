@@ -7,4 +7,5 @@ Containers/Rabbitmq/data/*
 Containers/Consul/data/*
 Containers/Minio/data/*
 Containers/Minio/config/*
+Containers/MariaDB/mysql/*
 Code/035-boltdb01/*.db

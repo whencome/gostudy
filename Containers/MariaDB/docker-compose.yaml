@@ -2,7 +2,7 @@ version: '3'
 
 services:
   mysql:
-    image: mysql:5.7.32
+    image: mariadb:10.3.28
     restart: always
     container_name: mysql
     volumes:
@@ -21,9 +21,9 @@ services:
       --max_allowed_packet=128M
       --sql-mode="STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
     networks:
-      - mysqlnet
+      - mariadbnet
 
 networks:
-  mysqlnet:
+  mariadbnet:
     driver: bridge
     
