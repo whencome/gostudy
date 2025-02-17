@@ -1,5 +1,6 @@
 .vscode/*
 .idea/*
+bin/*
 Containers/Kafka/data/*
 Containers/Redis/data/*
 Containers/Etcd/data/*
