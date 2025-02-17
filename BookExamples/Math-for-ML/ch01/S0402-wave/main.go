@@ -22,8 +22,8 @@ func main() {
 
 	// create plot
 	p := plot.New()
-	p.Title.Text = "正弦与余弦波形对比"
-	p.X.Label.Text = "角度（弧度）"
+	p.Title.Text = "Sin & Cos"
+	p.X.Label.Text = "角度（弧度）" // 中文不显示
 	p.Y.Label.Text = "幅值"
 	p.X.Min, p.X.Max = 0, 4*math.Pi // 设置X轴范围
 	p.Y.Min, p.Y.Max = -1.2, 1.2    // 设置Y轴范围
