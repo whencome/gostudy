@@ -114,6 +114,7 @@ func validate(df dataframe.DataFrame, theta *mat.Dense) error {
 	// 预测值
 	var pred *mat.Dense = &mat.Dense{}
 	pred.Mul(xData, theta)
+	fmt.Printf("预测结果: %#v\n", pred.RawMatrix().Data)
 
 	// 计算均方差
 	var residuals *mat.Dense = &mat.Dense{}

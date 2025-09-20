@@ -9,4 +9,7 @@ Containers/Consul/data/*
 Containers/Minio/data/*
 Containers/Minio/config/*
 Containers/MariaDB/mysql/*
+Containers/Nacos/mysql/*
+Containers/Nacos/nacos/*
 Code/035-boltdb01/*.db
+Code/053-nacos-register/log/*

@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  nacos:
+    image: nacos/nacos-server:v2.4.1
+    container_name: nacos-standalone
+    networks: 
+      - nacosnet
+    environment:
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=mysql-nacos       # MySQL 地址
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_USER=nacos
+      - MYSQL_SERVICE_PASSWORD=nacos2024     # 密码需符合 MySQL 要求
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - JVM_XMX=1024m
+      - JVM_XMS=1024m
+      - JVM_XMN=512m
+      - NACOS_SERVER_IP=127.0.0.1
+      - TIME_ZONE=Asia/Shanghai
+    ports:
+      - "8848:8848"         # HTTP 接口
+      - "9848:9848"         # ✅ 必须添加：gRPC 端口（客户端服务发现用）
+      - "9848:9848/udp"     # ✅ Nacos 2.0+ 推荐同时开放 UDP（用于长连接）
+    volumes:
+      - ./nacos/logs:/home/nacos/logs
+      - ./nacos/data:/home/nacos/data
+    depends_on:
+      - mysql-nacos
+    restart: on-failure
+
+  mysql-nacos:
+    image: mysql:8.0
+    container_name: mysql-nacos
+    command: --default-authentication-plugin=mysql_native_password
+    networks: 
+      - nacosnet
+    environment:
+      MYSQL_ROOT_PASSWORD: root@123456
+      MYSQL_DATABASE: nacos_config
+      MYSQL_USER: nacos
+      MYSQL_PASSWORD: nacos2024
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/logs:/var/log/mysql
+    restart: on-failure
+
+networks:
+  nacosnet:
+    driver: bridge
