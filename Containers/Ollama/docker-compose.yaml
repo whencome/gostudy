@@ -8,3 +8,6 @@ services:
     volumes:
       - ./ollama-data:/root/.ollama
     restart: always
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
